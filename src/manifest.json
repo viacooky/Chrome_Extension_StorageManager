@@ -1,0 +1,12 @@
+{
+  "manifest_version": 2,
+  "name": "StorageManager",
+  "description": "a currently clone",
+  "version": "0.1",
+  "offline_enabled": true,
+  "browser_action": {
+    "default_icon": "img/128x128.png",
+    "default_popup": "popup.html"
+  },
+  "permissions": ["storage","activeTab"]
+}
