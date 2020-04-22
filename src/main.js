@@ -68,15 +68,15 @@
     //   false
     // );
 
-    let filterStr = document.getElementById("filter").value;
-    console.log(filterStr);
+    // let filterStr = document.getElementById("filter").value;
     currentTabExecScriptFile("inject.js", function (localStorage) {
       let rows = [];
       Object.keys(localStorage).forEach(function (key) {
         rows.push(new Row(key, String(localStorage[key])));
       });
       randerTable(rows, (row) => {
-        return row.key == filterStr;
+        // return row.key == filterStr;
+        return row.key == 'xbbAccessToken';
       });
     });
   }
