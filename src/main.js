@@ -1,62 +1,85 @@
-function showStorageTable(arg1, arg2){
-    var table = '<table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody>';
-    table += '<tr>';
-    table += '<td>' + arg1 + '</td>';
-    table += '<td>' + arg2 + '</td>';
-    table += '</tr>';
-    table += '</tbody></table>';
-    document.getElementById('table').innerHTML = table;
-}
+(function (window, document, chrome) {
+  const tableHtmlHeader =
+    "<table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody>";
+  const tableHtmlFooter = "</tbody></table>";
 
-function GetXbbAccessToken(){
-    if(!window.localStorage){
-        alert('浏览器不支持localStorage!');
+  /**
+   * 行
+   */
+  class Row {
+    constructor(key, value) {
+      (this.key = key), (this.value = value);
     }
-    document.getElementById('getAccessToken').onclick = function(){
-        //   chrome.storage.sync.get(['xbbAccessToken'], function(result) {
-        //     console.log('Value currently is ' + result.key);
-        //     alert(result);
-        //   });
-        chrome.storage.sync.set({"xxxx":"xxxxxxxxxxxxxxxx"},function(){});
-        chrome.storage.sync.get("xxxx", function(rs){
-            console.log(rs.xxxx);
-            alert(rs.xxxx);
-        });
-        
-        var rr = getStorage();
-        console.log(rr);
-        alert(rr);
+  }
+
+  function randerTable(rows, filter_callback) {
+    let tableHtml = `${tableHtmlHeader}${tableHtmlFooter}`;
+    if (rows != null) {
+      let rowsHtml = "";
+      rows.filter(filter_callback).forEach((row) => {
+        rowsHtml += `<tr><td>${row.key}</td><td>${row.value}</td></tr>`;
+      });
+      tableHtml = `${tableHtmlHeader}${rowsHtml}${tableHtmlFooter}`;
     }
-    
-}
+    // console.log(tableHtml);
+    document.getElementById("table").innerHTML = tableHtml;
+  }
 
-function getStorage() {
-    var obj = {};
-    var storage = localStorage ;
-    if (storage === undefined) {
-        return;
-    }
+  function currentTabExecScript(script, callback) {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      let currTab = tabs[0];
+      // console.log(currTab.id);
+      let exec = chrome.tabs.executeScript;
+      exec(currTab.id, { code: script }, function (result) {
+        callback(result);
+      });
+    });
+  }
 
-    var specialKeys = [
-        'length', 'key', 'getItem',
-        'setItem', 'removeItem', 'clear'
-    ];
+  function currentTabExecScriptFile(scriptFile, callback) {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      let currTab = tabs[0];
+      // console.log(currTab.id);
+      let exec = chrome.tabs.executeScript;
+      exec(currTab.id, { file: scriptFile }, function (result) {
+        callback(result[0]);
+      });
+    });
+  }
 
-    for (var i in storage) {
-        if (storage.hasOwnProperty(i)) {
-            obj[i] = storage.getItem(i);
-        }
-    }
+  /**
+   * 初始化
+   */
+  function init() {
+    // document.getElementById("copy").addEventListener(
+    //   "click",
+    //   function () {
+    //     // 添加一个元素，用来装载文本
+    //     var w = document.createElement("tmp_input");
+    //     w.value = "hello crx";
+    //     document.body.appendChild(w);
+    //     w.select();
+    //     // 调用浏览器的复制命令
+    //     document.execCommand("Copy");
+    //     // 删除元素
+    //     document.body.removeChild(w);
+    //     alert("已复制到粘贴板");
+    //   },
+    //   false
+    // );
 
-    var item;
-    for (var i in specialKeys) {
-        item = storage.getItem(specialKeys[i]);
-        if (item !== null) {
-            obj[specialKeys[i]] = item;
-        }
-    }
-
-    return obj;
-}
-
-GetXbbAccessToken();
+    let filterStr = document.getElementById("filter").value;
+    console.log(filterStr);
+    currentTabExecScriptFile("inject.js", function (localStorage) {
+      let rows = [];
+      Object.keys(localStorage).forEach(function (key) {
+        rows.push(new Row(key, String(localStorage[key])));
+      });
+      randerTable(rows, (row) => {
+        return row.key == filterStr;
+      });
+    });
+  }
+  //////////////////////////////////////////////////////
+  init();
+})(window, document, chrome);
